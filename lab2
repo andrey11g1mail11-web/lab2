@@ -1,0 +1,87 @@
+UKR_LOWER = "абвгґдеєжзиіїйклмнопрстуфхцчшщьюя"
+UKR_UPPER = "АБВГҐДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЬЮЯ"
+ALPHABET_LEN = len(UKR_LOWER)
+
+def caesar_cipher(text, shift, decrypt=False):
+    if decrypt:
+        shift = -shift
+    result = []
+    for char in text:
+        if char in UKR_LOWER:
+            idx = UKR_LOWER.index(char)
+            result.append(UKR_LOWER[(idx + shift) % ALPHABET_LEN])
+        elif char in UKR_UPPER:
+            idx = UKR_UPPER.index(char)
+            result.append(UKR_UPPER[(idx + shift) % ALPHABET_LEN])
+        else:
+            result.append(char)
+    return "".join(result)
+
+def vigenere_cipher(text, key, decrypt=False):
+    key_shifts = [UKR_LOWER.index(ch) for ch in key.lower() if ch in UKR_LOWER]
+    if not key_shifts:
+        raise ValueError("Ключ повинен містити літери українського алфавіту")
+
+    result = []
+    key_idx = 0
+    for char in text:
+        shift = key_shifts[key_idx % len(key_shifts)]
+        if decrypt:
+            shift = -shift
+
+        if char in UKR_LOWER:
+            idx = UKR_LOWER.index(char)
+            result.append(UKR_LOWER[(idx + shift) % ALPHABET_LEN])
+            key_idx += 1
+        elif char in UKR_UPPER:
+            idx = UKR_UPPER.index(char)
+            result.append(UKR_UPPER[(idx + shift) % ALPHABET_LEN])
+            key_idx += 1
+        else:
+            result.append(char)
+    return "".join(result)
+
+def gamma_cipher(text_bytes, key_bytes):
+    key_len = len(key_bytes)
+    return bytes([b ^ key_bytes[i % key_len] for i, b in enumerate(text_bytes)])
+
+if __name__ == "__main__":
+    text = (
+        "Як умру, то поховайте\n"
+        "Мене на могилі\n"
+        "Серед степу широкого\n"
+        "На Вкраїні милій..."
+    )
+
+    day_of_work = 29
+    vigenere_key = "Новаковський"
+    gamma_key = "НоваковськийАндрійОлександрович2909"
+
+    print("=== ВИХІДНИЙ ТЕКСТ ===")
+    print(text)
+    print("\n" + "="*50 + "\n")
+
+    c_enc = caesar_cipher(text, day_of_work)
+    c_dec = caesar_cipher(c_enc, day_of_work, decrypt=True)
+    print(f"--- 1. ШИФР ЦЕЗАРЯ (зсув = {day_of_work}) ---")
+    print("Зашифровано:\n", c_enc)
+    print("Розшифровано:\n", c_dec)
+    print("\n" + "="*50 + "\n")
+
+    v_enc = vigenere_cipher(text, vigenere_key)
+    v_dec = vigenere_cipher(v_enc, vigenere_key, decrypt=True)
+    print(f"--- 2. ШИФР ВІЖЕНЕРА (ключ = '{vigenere_key}') ---")
+    print("Зашифровано:\n", v_enc)
+    print("Розшифровано:\n", v_dec)
+    print("\n" + "="*50 + "\n")
+
+    original_bytes = text.encode("utf-8")
+    key_bytes = gamma_key.encode("utf-8")
+    g_enc = gamma_cipher(original_bytes, key_bytes)
+    g_dec = gamma_cipher(g_enc, key_bytes)
+
+    print(f"--- 3. ШИФР ГАМУВАННЯ (гамма = '{gamma_key}') ---")
+    print("Зашифровані байти (HEX):")
+    print(g_enc.hex())
+    print("\nРозшифровано:")
+    print(g_dec.decode("utf-8"))
